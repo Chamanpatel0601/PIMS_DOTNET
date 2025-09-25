@@ -1,5 +1,4 @@
-﻿
-using PIMS_DOTNET.DTOS;
+﻿using PIMS_DOTNET.DTOS;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -12,5 +11,7 @@ namespace PIMS_DOTNET.Services
         Task<UserDTO?> AuthenticateAsync(UserLoginDTO dto);
         Task<IEnumerable<UserDTO>> GetAllAsync();
         Task<UserDTO?> GetByIdAsync(Guid userId);
+        Task<UserDTO?> UpdateAsync(Guid userId, UserRegisterDTO dto);
+        Task<bool> DeleteAsync(Guid userId);
     }
 }
