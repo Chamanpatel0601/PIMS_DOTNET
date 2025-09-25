@@ -9,5 +9,7 @@
         public string RoleName { get; set; } = null!;
         public bool IsActive { get; set; }
         public DateTime CreatedDate { get; set; }
+
+        public string? Token { get; set; }
     }
 }

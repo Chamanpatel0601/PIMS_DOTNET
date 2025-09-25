@@ -1,9 +1,12 @@
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using PIMS_DOTNET.Repository;
 using PIMS_DOTNET.Services;
 using AutoMapper;
 using PIMS_DOTNET.Mapping;
-using PIMS_DOTNET.Middleware; // ?? Add this for ExceptionMiddleware
+using PIMS_DOTNET.Middleware;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,16 +36,35 @@ builder.Services.AddScoped<IInventoryTransactionService, InventoryTransactionSer
 // -------------------- Register AutoMapper --------------------
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
-// -------------------- Optional: JWT Authentication --------------------
-// builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-//        .AddJwtBearer(options => { /* Configure JWT here */ });
+// -------------------- JWT Authentication --------------------
+var jwtSettings = builder.Configuration.GetSection("Jwt");
+var key = Encoding.ASCII.GetBytes(jwtSettings["Key"]);
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,                           
+        ValidateAudience = true,                         
+        ValidateIssuerSigningKey = true,                 
+        ValidIssuer = jwtSettings["Issuer"],            
+        ValidAudience = jwtSettings["Audience"],        
+        IssuerSigningKey = new SymmetricSecurityKey(key),
+        ClockSkew = TimeSpan.Zero                        
+    };
+});
 
 // -------------------- Build app --------------------
 var app = builder.Build();
 
 // -------------------- Configure middleware --------------------
 
-// ? Add Global Exception Handler Middleware
+//Global Exception Handler
 app.UseGlobalExceptionHandler();
 
 if (app.Environment.IsDevelopment())
@@ -53,9 +75,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-// Uncomment if JWT authentication is configured
-// app.UseAuthentication();
-
+//Enable authentication and authorization
+app.UseAuthentication();
 app.UseAuthorization();
 
 // Map controllers
