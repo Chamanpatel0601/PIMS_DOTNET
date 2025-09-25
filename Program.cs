@@ -1,4 +1,7 @@
 
+using Microsoft.EntityFrameworkCore;
+using PIMS_DOTNET.Repository;
+
 namespace PIMS_DOTNET
 {
     public class Program
@@ -15,6 +18,10 @@ namespace PIMS_DOTNET
             builder.Services.AddSwaggerGen();
 
             var app = builder.Build();
+
+            builder.Services.AddDbContext<AppDbContext>(options =>
+            options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
