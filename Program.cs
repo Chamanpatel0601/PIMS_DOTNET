@@ -3,6 +3,7 @@ using PIMS_DOTNET.Repository;
 using PIMS_DOTNET.Services;
 using AutoMapper;
 using PIMS_DOTNET.Mapping;
+using PIMS_DOTNET.Middleware; // ?? Add this for ExceptionMiddleware
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,7 +31,6 @@ builder.Services.AddScoped<IProductCategoryService, ProductCategoryService>();
 builder.Services.AddScoped<IInventoryTransactionService, InventoryTransactionService>();
 
 // -------------------- Register AutoMapper --------------------
-// This will scan all assemblies for Profile classes automatically
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 // -------------------- Optional: JWT Authentication --------------------
@@ -41,6 +41,10 @@ builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 var app = builder.Build();
 
 // -------------------- Configure middleware --------------------
+
+// ? Add Global Exception Handler Middleware
+app.UseGlobalExceptionHandler();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
