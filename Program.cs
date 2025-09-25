@@ -22,6 +22,8 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IInventoryService, InventoryService>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
+
 
 // (Optional) Add authentication / JWT here if needed
 // builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
