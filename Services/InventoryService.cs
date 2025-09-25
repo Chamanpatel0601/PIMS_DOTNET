@@ -1,6 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PIMS_DOTNET.Models;
 using PIMS_DOTNET.Repository;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace PIMS_DOTNET.Services
 {
@@ -28,15 +32,14 @@ namespace PIMS_DOTNET.Services
             inventory.Quantity += quantityChange;
             inventory.LastUpdated = DateTime.UtcNow;
 
-            var transaction = new InventoryTransaction
+            _context.InventoryTransactions.Add(new InventoryTransaction
             {
                 ProductId = productId,
                 QuantityChange = quantityChange,
                 Reason = reason,
                 UserId = userId
-            };
+            });
 
-            _context.InventoryTransactions.Add(transaction);
             await _context.SaveChangesAsync();
             return true;
         }
@@ -61,36 +64,30 @@ namespace PIMS_DOTNET.Services
             var inventory = await _context.Inventories.FirstOrDefaultAsync(i => i.ProductId == productId);
             if (inventory == null) return false;
 
-            int difference = newQuantity - inventory.Quantity;
+            int oldQuantity = inventory.Quantity;
             inventory.Quantity = newQuantity;
             inventory.LastUpdated = DateTime.UtcNow;
 
-            var transaction = new InventoryTransaction
+            _context.InventoryTransactions.Add(new InventoryTransaction
             {
                 ProductId = productId,
-                QuantityChange = difference,
+                QuantityChange = newQuantity - oldQuantity,
                 Reason = reason,
                 UserId = userId
-            };
+            });
 
-            _context.InventoryTransactions.Add(transaction);
-
-            var auditLog = new AuditLog
+            _context.AuditLogs.Add(new AuditLog
             {
                 UserId = userId,
                 Action = "Inventory Audit",
                 EntityName = "Inventory",
                 EntityId = inventory.InventoryId,
-                OldValue = inventory.Quantity.ToString(),
+                OldValue = oldQuantity.ToString(),
                 NewValue = newQuantity.ToString()
-            };
-
-            _context.AuditLogs.Add(auditLog);
+            });
 
             await _context.SaveChangesAsync();
             return true;
         }
-
-
     }
-    }
+}

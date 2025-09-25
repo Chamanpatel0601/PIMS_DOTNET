@@ -1,4 +1,7 @@
 ﻿using PIMS_DOTNET.Models;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace PIMS_DOTNET.Services
 {
@@ -11,4 +14,3 @@ namespace PIMS_DOTNET.Services
         Task<bool> AuditInventoryAsync(Guid productId, int newQuantity, string reason, Guid userId);
     }
 }
-

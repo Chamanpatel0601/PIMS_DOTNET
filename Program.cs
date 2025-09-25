@@ -23,6 +23,8 @@ builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IInventoryService, InventoryService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<IAuditLogService, AuditLogService>();
+
 
 
 // (Optional) Add authentication / JWT here if needed
