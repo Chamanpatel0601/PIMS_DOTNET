@@ -8,14 +8,14 @@ var builder = WebApplication.CreateBuilder(args);
 
 // -------------------- Add services --------------------
 
-// Add DbContext
+// Add DbContext with SQL Server
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Add controllers
 builder.Services.AddControllers();
 
-// Swagger / OpenAPI
+// Add Swagger / OpenAPI
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -30,11 +30,12 @@ builder.Services.AddScoped<IProductCategoryService, ProductCategoryService>();
 builder.Services.AddScoped<IInventoryTransactionService, InventoryTransactionService>();
 
 // -------------------- Register AutoMapper --------------------
-builder.Services.AddAutoMapper(typeof(MappingProfile));
+// This will scan all assemblies for Profile classes automatically
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
-// -------------------- Optional: Authentication / JWT --------------------
+// -------------------- Optional: JWT Authentication --------------------
 // builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-//        .AddJwtBearer(options => { ... });
+//        .AddJwtBearer(options => { /* Configure JWT here */ });
 
 // -------------------- Build app --------------------
 var app = builder.Build();
@@ -48,9 +49,13 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-// app.UseAuthentication(); // Optional JWT middleware
+// Uncomment if JWT authentication is configured
+// app.UseAuthentication();
+
 app.UseAuthorization();
 
+// Map controllers
 app.MapControllers();
 
+// Run the application
 app.Run();

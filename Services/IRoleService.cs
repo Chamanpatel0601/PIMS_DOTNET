@@ -8,5 +8,8 @@ namespace PIMS_DOTNET.Services
     {
         Task<IEnumerable<RoleDTO>> GetAllAsync();
         Task<RoleDTO?> GetByIdAsync(int roleId);
+        Task<RoleDTO> CreateAsync(RoleDTO dto);
+        Task<RoleDTO?> UpdateAsync(RoleDTO dto);
+        Task<bool> DeleteAsync(int roleId);
     }
 }
