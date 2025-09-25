@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("PIMS_DOTNET")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4369a88f1d1000fe71fd93e3f81451858ada2ea4")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d51caabede4b465b57c65e151de00a8e3554bf7e")]
 [assembly: System.Reflection.AssemblyProductAttribute("PIMS_DOTNET")]
 [assembly: System.Reflection.AssemblyTitleAttribute("PIMS_DOTNET")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

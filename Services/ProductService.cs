@@ -1,86 +1,41 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
+
+using PIMS_DOTNET.DTOS;
 using PIMS_DOTNET.Models;
 using PIMS_DOTNET.Repository;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace PIMS_DOTNET.Services
 {
     public class ProductService : IProductService
     {
         private readonly AppDbContext _context;
+        private readonly IMapper _mapper;
 
-        public ProductService(AppDbContext context)
+        public ProductService(AppDbContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
-        public async Task<IEnumerable<Product>> GetAllAsync()
+        public async Task<ProductDTO> CreateAsync(ProductCreateDTO dto)
         {
-            return await _context.Products
-                .Include(p => p.ProductCategories)
-                    .ThenInclude(pc => pc.Category)
-                .ToListAsync();
-        }
+            // SKU uniqueness check
+            if (await _context.Products.AnyAsync(p => p.SKU == dto.SKU))
+                throw new InvalidOperationException("SKU must be unique");
 
-        public async Task<Product?> GetByIdAsync(Guid productId)
-        {
-            return await _context.Products
-                .Include(p => p.ProductCategories)
-                    .ThenInclude(pc => pc.Category)
-                .FirstOrDefaultAsync(p => p.ProductId == productId);
-        }
+            var product = _mapper.Map<Product>(dto);
 
-        public async Task<Product> CreateAsync(Product product, IEnumerable<int> categoryIds)
-        {
-            if (!await IsSkuUniqueAsync(product.SKU))
-                throw new Exception("SKU must be unique.");
+            // Assign categories if any
+            if (dto.CategoryIds != null)
+            {
+                product.ProductCategories = dto.CategoryIds
+                    .Select(cid => new ProductCategory { CategoryId = cid, Product = product }).ToList();
+            }
 
             _context.Products.Add(product);
             await _context.SaveChangesAsync();
-
-            foreach (var catId in categoryIds)
-            {
-                _context.ProductCategories.Add(new ProductCategory
-                {
-                    ProductId = product.ProductId,
-                    CategoryId = catId
-                });
-            }
-            await _context.SaveChangesAsync();
-
-            return product;
-        }
-
-        public async Task<Product?> UpdateAsync(Product product, IEnumerable<int> categoryIds)
-        {
-            var existing = await _context.Products.FindAsync(product.ProductId);
-            if (existing == null) return null;
-
-            if (!await IsSkuUniqueAsync(product.SKU, product.ProductId))
-                throw new Exception("SKU must be unique.");
-
-            existing.Name = product.Name;
-            existing.Description = product.Description;
-            existing.Price = product.Price;
-            existing.SKU = product.SKU;
-
-            var existingCategories = _context.ProductCategories.Where(pc => pc.ProductId == product.ProductId);
-            _context.ProductCategories.RemoveRange(existingCategories);
-
-            foreach (var catId in categoryIds)
-            {
-                _context.ProductCategories.Add(new ProductCategory
-                {
-                    ProductId = product.ProductId,
-                    CategoryId = catId
-                });
-            }
-
-            await _context.SaveChangesAsync();
-            return existing;
+            return _mapper.Map<ProductDTO>(product);
         }
 
         public async Task<bool> DeleteAsync(Guid productId)
@@ -93,32 +48,90 @@ namespace PIMS_DOTNET.Services
             return true;
         }
 
-        public async Task<bool> AdjustPriceAsync(Guid productId, decimal adjustment, bool isPercentage)
+        public async Task<IEnumerable<ProductDTO>> GetAllAsync()
+        {
+            var products = await _context.Products
+                .Include(p => p.ProductCategories)
+                    .ThenInclude(pc => pc.Category)
+                .Include(p => p.Inventory)
+                .ToListAsync();
+            return _mapper.Map<IEnumerable<ProductDTO>>(products);
+        }
+
+        public async Task<ProductDTO?> GetByIdAsync(Guid productId)
+        {
+            var product = await _context.Products
+                .Include(p => p.ProductCategories)
+                    .ThenInclude(pc => pc.Category)
+                .Include(p => p.Inventory)
+                .FirstOrDefaultAsync(p => p.ProductId == productId);
+
+            return product == null ? null : _mapper.Map<ProductDTO>(product);
+        }
+
+        public async Task<IEnumerable<ProductDTO>> GetByCategoryAsync(int categoryId)
+        {
+            var products = await _context.ProductCategories
+                .Where(pc => pc.CategoryId == categoryId)
+                .Select(pc => pc.Product)
+                .Include(p => p.ProductCategories)
+                    .ThenInclude(pc => pc.Category)
+                .Include(p => p.Inventory)
+                .ToListAsync();
+
+            return _mapper.Map<IEnumerable<ProductDTO>>(products);
+        }
+
+        public async Task<ProductDTO?> UpdateAsync(ProductUpdateDTO dto)
+        {
+            var product = await _context.Products
+                .Include(p => p.ProductCategories)
+                .FirstOrDefaultAsync(p => p.ProductId == dto.ProductId);
+
+            if (product == null) return null;
+
+            // Check SKU uniqueness
+            if (await _context.Products.AnyAsync(p => p.SKU == dto.SKU && p.ProductId != dto.ProductId))
+                throw new InvalidOperationException("SKU must be unique");
+
+            product.Name = dto.Name;
+            product.SKU = dto.SKU;
+            product.Description = dto.Description;
+            product.Price = dto.Price;
+
+            // Update categories
+            if (dto.CategoryIds != null)
+            {
+                product.ProductCategories.Clear();
+                foreach (var cid in dto.CategoryIds)
+                {
+                    product.ProductCategories.Add(new ProductCategory { ProductId = product.ProductId, CategoryId = cid });
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            return _mapper.Map<ProductDTO>(product);
+        }
+
+        public async Task<bool> AdjustPriceAsync(Guid productId, decimal amount, bool isPercentage)
         {
             var product = await _context.Products.FindAsync(productId);
             if (product == null) return false;
 
             if (isPercentage)
-                product.Price -= product.Price * (adjustment / 100);
+            {
+                product.Price += product.Price * amount / 100;
+            }
             else
-                product.Price -= adjustment;
+            {
+                product.Price += amount;
+            }
 
+            // Prevent negative price
             if (product.Price < 0) product.Price = 0;
 
             await _context.SaveChangesAsync();
             return true;
-        }
-
-        public async Task<IEnumerable<Product>> GetByCategoryAsync(int categoryId)
-        {
-            return await _context.Products
-                .Where(p => p.ProductCategories.Any(pc => pc.CategoryId == categoryId))
-                .ToListAsync();
-        }
-
-        public async Task<bool> IsSkuUniqueAsync(string sku, Guid? productId = null)
-        {
-            return !await _context.Products.AnyAsync(p => p.SKU == sku && p.ProductId != productId);
         }
     }
 }

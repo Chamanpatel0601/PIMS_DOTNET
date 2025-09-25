@@ -1,7 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
+
+using PIMS_DOTNET.DTOS;
 using PIMS_DOTNET.Models;
 using PIMS_DOTNET.Repository;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace PIMS_DOTNET.Services
@@ -9,45 +13,20 @@ namespace PIMS_DOTNET.Services
     public class CategoryService : ICategoryService
     {
         private readonly AppDbContext _context;
+        private readonly IMapper _mapper;
 
-        public CategoryService(AppDbContext context)
+        public CategoryService(AppDbContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
-        public async Task<IEnumerable<Category>> GetAllAsync()
+        public async Task<CategoryDTO> CreateAsync(CategoryCreateDTO dto)
         {
-            return await _context.Categories
-                .Include(c => c.ProductCategories)
-                    .ThenInclude(pc => pc.Product)
-                .ToListAsync();
-        }
-
-        public async Task<Category?> GetByIdAsync(int categoryId)
-        {
-            return await _context.Categories
-                .Include(c => c.ProductCategories)
-                    .ThenInclude(pc => pc.Product)
-                .FirstOrDefaultAsync(c => c.CategoryId == categoryId);
-        }
-
-        public async Task<Category> CreateAsync(Category category)
-        {
+            var category = _mapper.Map<Category>(dto);
             _context.Categories.Add(category);
             await _context.SaveChangesAsync();
-            return category;
-        }
-
-        public async Task<Category?> UpdateAsync(Category category)
-        {
-            var existingCategory = await _context.Categories.FindAsync(category.CategoryId);
-            if (existingCategory == null) return null;
-
-            existingCategory.CategoryName = category.CategoryName;
-            existingCategory.Description = category.Description;
-
-            await _context.SaveChangesAsync();
-            return existingCategory;
+            return _mapper.Map<CategoryDTO>(category);
         }
 
         public async Task<bool> DeleteAsync(int categoryId)
@@ -58,6 +37,30 @@ namespace PIMS_DOTNET.Services
             _context.Categories.Remove(category);
             await _context.SaveChangesAsync();
             return true;
+        }
+
+        public async Task<IEnumerable<CategoryDTO>> GetAllAsync()
+        {
+            var categories = await _context.Categories.ToListAsync();
+            return _mapper.Map<IEnumerable<CategoryDTO>>(categories);
+        }
+
+        public async Task<CategoryDTO?> GetByIdAsync(int categoryId)
+        {
+            var category = await _context.Categories.FindAsync(categoryId);
+            return category == null ? null : _mapper.Map<CategoryDTO>(category);
+        }
+
+        public async Task<CategoryDTO?> UpdateAsync(CategoryUpdateDTO dto)
+        {
+            var category = await _context.Categories.FindAsync(dto.CategoryId);
+            if (category == null) return null;
+
+            category.CategoryName = dto.CategoryName;
+            category.Description = dto.Description;
+
+            await _context.SaveChangesAsync();
+            return _mapper.Map<CategoryDTO>(category);
         }
     }
 }

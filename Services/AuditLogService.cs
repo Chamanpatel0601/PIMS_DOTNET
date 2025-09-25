@@ -1,4 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
+
+using PIMS_DOTNET.DTOS;
 using PIMS_DOTNET.Models;
 using PIMS_DOTNET.Repository;
 using System;
@@ -11,53 +14,36 @@ namespace PIMS_DOTNET.Services
     public class AuditLogService : IAuditLogService
     {
         private readonly AppDbContext _context;
+        private readonly IMapper _mapper;
 
-        public AuditLogService(AppDbContext context)
+        public AuditLogService(AppDbContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
-        // Retrieve all audit logs
-        public async Task<IEnumerable<AuditLog>> GetAllAsync()
+        public async Task<IEnumerable<AuditLogDTO>> GetAllAsync()
         {
-            return await _context.AuditLogs
+            var logs = await _context.AuditLogs.Include(a => a.User).ToListAsync();
+            return _mapper.Map<IEnumerable<AuditLogDTO>>(logs);
+        }
+
+        public async Task<IEnumerable<AuditLogDTO>> GetByUserIdAsync(Guid userId)
+        {
+            var logs = await _context.AuditLogs
                 .Include(a => a.User)
-                .OrderByDescending(a => a.Timestamp)
-                .ToListAsync();
-        }
-
-        // Retrieve audit logs by a specific user
-        public async Task<IEnumerable<AuditLog>> GetByUserIdAsync(Guid userId)
-        {
-            return await _context.AuditLogs
                 .Where(a => a.UserId == userId)
-                .Include(a => a.User)
-                .OrderByDescending(a => a.Timestamp)
                 .ToListAsync();
+            return _mapper.Map<IEnumerable<AuditLogDTO>>(logs);
         }
 
-        // Retrieve audit logs by entity name and optional entity ID
-        public async Task<IEnumerable<AuditLog>> GetByEntityAsync(string entityName, Guid? entityId = null)
+        public async Task<IEnumerable<AuditLogDTO>> GetByEntityAsync(string entityName, Guid entityId)
         {
-            var query = _context.AuditLogs.AsQueryable();
-
-            query = query.Where(a => a.EntityName == entityName);
-
-            if (entityId.HasValue)
-                query = query.Where(a => a.EntityId == entityId);
-
-            return await query
+            var logs = await _context.AuditLogs
                 .Include(a => a.User)
-                .OrderByDescending(a => a.Timestamp)
+                .Where(a => a.EntityName == entityName && a.EntityId == entityId)
                 .ToListAsync();
-        }
-
-        // Create a new audit log entry
-        public async Task<AuditLog> CreateAsync(AuditLog auditLog)
-        {
-            _context.AuditLogs.Add(auditLog);
-            await _context.SaveChangesAsync();
-            return auditLog;
+            return _mapper.Map<IEnumerable<AuditLogDTO>>(logs);
         }
     }
 }
