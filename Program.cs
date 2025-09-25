@@ -26,6 +26,8 @@ builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IInventoryService, InventoryService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
+builder.Services.AddScoped<IProductCategoryService, ProductCategoryService>();
+builder.Services.AddScoped<IInventoryTransactionService, InventoryTransactionService>();
 
 // -------------------- Register AutoMapper --------------------
 builder.Services.AddAutoMapper(typeof(MappingProfile));
