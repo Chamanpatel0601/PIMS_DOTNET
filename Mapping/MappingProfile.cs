@@ -9,9 +9,17 @@ namespace PIMS_DOTNET.Mapping
         public MappingProfile()
         {
             // Product mapping
-            CreateMap<Product, ProductDTO>().ReverseMap();
+            CreateMap<Product, ProductDTO>()
+                .ForMember(dest => dest.Categories,
+                           opt => opt.MapFrom(src => src.ProductCategories.Select(pc => pc.Category)))
+                .ForMember(dest => dest.Inventory,
+                           opt => opt.MapFrom(src => src.Inventory))
+                .ReverseMap();
+
             CreateMap<ProductCreateDTO, Product>();
             CreateMap<ProductUpdateDTO, Product>();
+
+
 
             // Category mapping
             CreateMap<Category, CategoryDTO>().ReverseMap();
