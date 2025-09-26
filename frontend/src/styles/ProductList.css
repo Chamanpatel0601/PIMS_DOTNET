@@ -1,0 +1,144 @@
+/* src/styles/ProductList.css */
+
+.product-container {
+  width: 90%;
+  max-width: 1000px;
+  margin: 40px auto;
+  font-family: Arial, sans-serif;
+  color: #333;
+}
+
+h2 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* Add Product Button */
+.btn-add {
+  display: block;
+  margin: 0 auto 20px auto;
+  padding: 10px 20px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.btn-add:hover {
+  background-color: #45a049;
+}
+
+/* Form Styling */
+.product-form {
+  background-color: #f9f9f9;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  margin-bottom: 30px;
+}
+
+.product-form .form-group {
+  margin-bottom: 15px;
+}
+
+.product-form label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.product-form input,
+.product-form textarea,
+.product-form select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.product-form textarea {
+  resize: vertical;
+}
+
+.form-buttons {
+  margin-top: 15px;
+  display: flex;
+  gap: 10px;
+}
+
+.btn-submit {
+  background-color: #2196f3;
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.btn-submit:hover {
+  background-color: #1976d2;
+}
+
+.btn-cancel {
+  background-color: #f44336;
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.btn-cancel:hover {
+  background-color: #d32f2f;
+}
+
+/* Table Styling */
+.product-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 40px;
+}
+
+.product-table th,
+.product-table td {
+  border: 1px solid #ddd;
+  padding: 12px;
+  text-align: center;
+}
+
+.product-table th {
+  background-color: #f2f2f2;
+}
+
+.product-table tr:hover {
+  background-color: #f1f1f1;
+}
+
+/* Edit/Delete Buttons in Table */
+.btn-edit,
+.btn-delete {
+  padding: 6px 12px;
+  margin: 2px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.btn-edit {
+  background-color: #ff9800;
+  color: white;
+}
+
+.btn-edit:hover {
+  background-color: #fb8c00;
+}
+
+.btn-delete {
+  background-color: #f44336;
+  color: white;
+}
+
+.btn-delete:hover {
+  background-color: #d32f2f;
+}

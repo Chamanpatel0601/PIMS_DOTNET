@@ -1,5 +1,4 @@
-﻿
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -42,7 +41,7 @@ namespace PIMS_DOTNET.Controllers
         public async Task<ActionResult<UserDTO>> GetById(Guid id)
         {
             var user = await _userService.GetByIdAsync(id);
-            if (user == null) return NotFound();
+            if (user == null) return NotFound(new { message = "User not found" });
             return Ok(user);
         }
 
@@ -50,6 +49,9 @@ namespace PIMS_DOTNET.Controllers
         [HttpPost("register")]
         public async Task<ActionResult<UserDTO>> Register([FromBody] UserRegisterDTO dto)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
             try
             {
                 var user = await _userService.RegisterAsync(dto);
@@ -65,16 +67,24 @@ namespace PIMS_DOTNET.Controllers
         [HttpPost("login")]
         public async Task<ActionResult<object>> Login([FromBody] UserLoginDTO dto)
         {
-            var user = await _userService.AuthenticateAsync(dto);
-            if (user == null) return Unauthorized(new { message = "Invalid username or password" });
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
-            // Generate JWT Token
+            var user = await _userService.AuthenticateAsync(dto);
+            if (user == null)
+                return Unauthorized(new { message = "Invalid username or password" });
+
             var token = GenerateJwtToken(user);
 
             return Ok(new
             {
                 token,
-                user
+                user = new
+                {
+                    user.UserId,
+                    user.Username,
+                    Role = user.RoleName
+                }
             });
         }
 
@@ -83,10 +93,13 @@ namespace PIMS_DOTNET.Controllers
         [HttpPut("{id:guid}")]
         public async Task<ActionResult<UserDTO>> Update(Guid id, [FromBody] UserRegisterDTO dto)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
             try
             {
                 var updatedUser = await _userService.UpdateAsync(id, dto);
-                if (updatedUser == null) return NotFound();
+                if (updatedUser == null) return NotFound(new { message = "User not found" });
                 return Ok(updatedUser);
             }
             catch (InvalidOperationException ex)
@@ -101,18 +114,19 @@ namespace PIMS_DOTNET.Controllers
         public async Task<ActionResult> Delete(Guid id)
         {
             var deleted = await _userService.DeleteAsync(id);
-            if (!deleted) return NotFound();
+            if (!deleted) return NotFound(new { message = "User not found" });
             return NoContent();
         }
 
-        // --------------------JWT Token Generation --------------------
+        // -------------------- JWT Token Generation --------------------
         private string GenerateJwtToken(UserDTO user)
         {
             var jwtSettings = _configuration.GetSection("Jwt");
+
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            // Normalize role name -> Always "Admin" if Administrator, etc.
+            // Normalize role
             string normalizedRole = (user.RoleName ?? "User").ToLower() switch
             {
                 "administrator" => "Admin",
