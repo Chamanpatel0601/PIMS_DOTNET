@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import '../styles/TransactionList.css'; // import CSS
+import '../styles/TransactionList.css'; 
 
 const TransactionList = () => {
     const [transactions, setTransactions] = useState([]);
